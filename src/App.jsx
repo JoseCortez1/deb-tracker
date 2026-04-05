@@ -15,7 +15,7 @@ import {
 import { fmt, pct } from './utils/format.js';
 import { load, save } from './utils/storage.js';
 
-export default function App() {
+export default function App({ onLogout }) {
   const [tab, setTab] = useState('dashboard');
   const [debts, setDebts] = useState(() => load('debts', DEFAULT_DEBTS));
   const [income, setIncome] = useState(() => load('income', DEFAULT_INCOME));
@@ -128,12 +128,27 @@ export default function App() {
           <h1>
             Plan de <span>Liquidación</span>
           </h1>
-          <p>💀 Inicio: Abril 2026 · Sistema 2 cuentas</p>
+          <div className="header-left-row">
+            <p>💀 Inicio: Abril 2026 · Sistema 2 cuentas</p>
+            {typeof onLogout === 'function' ? (
+              <button
+                type="button"
+                className="btn-ghost header-logout"
+                onClick={() => {
+                  if (confirm('¿Cerrar sesión en este dispositivo?')) onLogout();
+                }}
+              >
+                Cerrar sesión
+              </button>
+            ) : null}
+          </div>
         </div>
-        <div className="header-badge">
-          <div className="label">Total restante</div>
-          <div className="value">{fmt(totalCurrent)}</div>
-          <div className="sub">{progress}% liberado · Meta: Sep 2026</div>
+        <div className="header-right">
+          <div className="header-badge">
+            <div className="label">Total restante</div>
+            <div className="value">{fmt(totalCurrent)}</div>
+            <div className="sub">{progress}% liberado · Meta: Sep 2026</div>
+          </div>
         </div>
       </div>
 
@@ -149,15 +164,22 @@ export default function App() {
         </div>
       </div>
 
-      <div className="tabs">
-        {TABS.map(([k, l]) => (
+      <div className="tabs" role="tablist">
+        {TABS.map(([k, icon, label]) => (
           <button
             key={k}
             type="button"
+            role="tab"
+            aria-selected={tab === k}
+            aria-label={label}
+            title={label}
             className={`tab-btn${tab === k ? ' active' : ''}`}
             onClick={() => setTab(k)}
           >
-            {l}
+            <span className="tab-icon" aria-hidden="true">
+              {icon}
+            </span>
+            <span className="tab-label">{label}</span>
           </button>
         ))}
       </div>
@@ -399,7 +421,9 @@ export default function App() {
                   <div className="debt-header">
                     <div className="debt-name">
                       <DebtAvatar debt={d} className="emoji" size={20} />
-                      <span>{d.name}</span>
+                      <span className="debt-title-text">{d.name}</span>
+                    </div>
+                    <div className="debt-header-actions">
                       <button
                         type="button"
                         className="btn-ghost debt-inline-edit"
@@ -409,14 +433,14 @@ export default function App() {
                       >
                         Editar
                       </button>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => togglePaid(d.id)}
+                      >
+                        {d.paid ? 'Reabrir' : 'Marcar pagada'}
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="btn-ghost"
-                      onClick={() => togglePaid(d.id)}
-                    >
-                      {d.paid ? 'Reabrir' : 'Marcar pagada'}
-                    </button>
                   </div>
                   {!d.paid && (
                     <>

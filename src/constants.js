@@ -122,10 +122,11 @@ export const GOLDEN_RULES = [
   'La despensa es temporal — se retoma en cuanto Banamex caiga.',
 ];
 
+/** [id, emoji, etiqueta accesible] — en móvil solo se muestra el emoji */
 export const TABS = [
-  ['dashboard', '📊 Dashboard'],
-  ['debts', '💳 Deudas'],
-  ['charts', '📈 Gráficas'],
-  ['timeline', '🗺️ Ruta'],
-  ['settings', '⚙️ Config'],
+  ['dashboard', '📊', 'Dashboard'],
+  ['debts', '💳', 'Deudas'],
+  ['charts', '📈', 'Gráficas'],
+  ['timeline', '🗺️', 'Ruta'],
+  ['settings', '⚙️', 'Config'],
 ];
