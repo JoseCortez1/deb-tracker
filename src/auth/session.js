@@ -50,10 +50,28 @@ export function expireLockoutIfNeeded() {
   }
 }
 
-export async function persistSession() {
+/**
+ * @param {string} [username] — identificador de usuario para datos por cuenta (p. ej. gastos).
+ */
+export async function persistSession(username) {
   const fp = await sessionFingerprint();
   const exp = Date.now() + SESSION_MS;
-  localStorage.setItem(SESSION_KEY, JSON.stringify({ exp, fp }));
+  const trimmed = typeof username === 'string' ? username.trim() : '';
+  const userId = trimmed || 'user';
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ exp, fp, userId }));
+}
+
+/** ID estable del usuario autenticado (sesión). Migración: sesiones antiguas sin userId → "default". */
+export function getCurrentUserId() {
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return 'default';
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed?.userId && typeof parsed.userId === 'string') return parsed.userId;
+  } catch {
+    /* ignore */
+  }
+  return 'default';
 }
 
 export async function isSessionValid() {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import App from './App.jsx';
 import { clearSession, isSessionValid } from './auth/session.js';
 import { LoginScreen } from './components/LoginScreen.jsx';
+import { NavigationProvider } from './navigation/NavigationContext.jsx';
 
 export function Root() {
   const [phase, setPhase] = useState('checking');
@@ -30,11 +31,13 @@ export function Root() {
   }
 
   return (
-    <App
-      onLogout={() => {
-        clearSession();
-        setPhase('guest');
-      }}
-    />
+    <NavigationProvider>
+      <App
+        onLogout={() => {
+          clearSession();
+          setPhase('guest');
+        }}
+      />
+    </NavigationProvider>
   );
 }

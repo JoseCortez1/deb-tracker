@@ -129,4 +129,5 @@ export const TABS = [
   ['charts', '📈', 'Gráficas'],
   ['timeline', '🗺️', 'Ruta'],
   ['settings', '⚙️', 'Config'],
+  ['expenses', '💸', 'Gastos'],
 ];

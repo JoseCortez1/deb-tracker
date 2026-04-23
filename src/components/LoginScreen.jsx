@@ -64,7 +64,7 @@ export function LoginScreen({ onSuccess }) {
       const ok = await verifyCredentials(user.trim(), pass);
       if (ok) {
         clearFailedAttempts();
-        await persistSession();
+        await persistSession(user.trim());
         onSuccess();
         return;
       }
