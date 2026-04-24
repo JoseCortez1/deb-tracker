@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { getCurrentUserId } from './auth/session.js';
 import { BarChart } from './components/BarChart.jsx';
 import { DebtAvatar } from './components/DebtAvatar.jsx';
 import { DebtIdentityModal } from './components/DebtIdentityModal.jsx';
 import { DonutChart } from './components/DonutChart.jsx';
+import { ExpensesPage } from './features/expenses/components/ExpensesPage.jsx';
 import {
   DEFAULT_DEBTS,
   DEFAULT_EXPENSES,
@@ -12,14 +14,19 @@ import {
   TABS,
   TIMELINE,
 } from './constants.js';
+import { useNavigation } from './navigation/NavigationContext.jsx';
 import { fmt, pct } from './utils/format.js';
 import { load, save } from './utils/storage.js';
 
 export default function App({ onLogout }) {
-  const [tab, setTab] = useState('dashboard');
+  const { path, navigate } = useNavigation();
+  const lastMainTabRef = useRef('dashboard');
+  const [tab, setTab] = useState(() =>
+    path === '/expenses' ? 'expenses' : 'dashboard'
+  );
   const [debts, setDebts] = useState(() => load('debts', DEFAULT_DEBTS));
   const [income, setIncome] = useState(() => load('income', DEFAULT_INCOME));
-  const [expenses, setExpenses] = useState(() =>
+  const [livingExpenses, setLivingExpenses] = useState(() =>
     load('expenses', DEFAULT_EXPENSES)
   );
   const [completedMonths, setCompletedMonths] = useState(() =>
@@ -34,8 +41,8 @@ export default function App({ onLogout }) {
     save('income', income);
   }, [income]);
   useEffect(() => {
-    save('expenses', expenses);
-  }, [expenses]);
+    save('expenses', livingExpenses);
+  }, [livingExpenses]);
   useEffect(() => {
     save('completedMonths', completedMonths);
   }, [completedMonths]);
@@ -47,7 +54,28 @@ export default function App({ onLogout }) {
   const minPayments = debts
     .filter((d) => !d.paid)
     .reduce((s, d) => s + Number(d.minPayment), 0);
-  const available = income - expenses - minPayments;
+  const available = income - livingExpenses - minPayments;
+
+  const expenseUserId = getCurrentUserId();
+
+  useEffect(() => {
+    if (path === '/expenses') {
+      setTab('expenses');
+    } else if (tab === 'expenses') {
+      setTab(lastMainTabRef.current);
+    }
+  }, [path, tab]);
+
+  const selectTab = (k) => {
+    if (k === 'expenses') {
+      setTab('expenses');
+      navigate('/expenses');
+      return;
+    }
+    lastMainTabRef.current = k;
+    setTab(k);
+    navigate('/');
+  };
 
   const updateDebt = (id, field, val) => {
     setDebts((prev) =>
@@ -88,7 +116,7 @@ export default function App({ onLogout }) {
     if (confirm('¿Resetear todos los datos al inicio?')) {
       setDebts(DEFAULT_DEBTS);
       setIncome(DEFAULT_INCOME);
-      setExpenses(DEFAULT_EXPENSES);
+      setLivingExpenses(DEFAULT_EXPENSES);
       setCompletedMonths([]);
     }
   };
@@ -174,7 +202,7 @@ export default function App({ onLogout }) {
             aria-label={label}
             title={label}
             className={`tab-btn${tab === k ? ' active' : ''}`}
-            onClick={() => setTab(k)}
+            onClick={() => selectTab(k)}
           >
             <span className="tab-icon" aria-hidden="true">
               {icon}
@@ -183,6 +211,8 @@ export default function App({ onLogout }) {
           </button>
         ))}
       </div>
+
+      {tab === 'expenses' && <ExpensesPage userId={expenseUserId} />}
 
       {tab === 'dashboard' && (
         <div className="animate-in">
@@ -598,9 +628,9 @@ export default function App({ onLogout }) {
                   },
                   {
                     label: 'Gastos vida',
-                    value: expenses,
+                    value: livingExpenses,
                     color: '#4a8cf7',
-                    pct: pct(expenses, income),
+                    pct: pct(livingExpenses, income),
                   },
                   {
                     label: 'Mínimos',
@@ -751,8 +781,8 @@ export default function App({ onLogout }) {
                 <input
                   id="expenses"
                   type="number"
-                  value={expenses}
-                  onChange={(e) => setExpenses(Number(e.target.value))}
+                  value={livingExpenses}
+                  onChange={(e) => setLivingExpenses(Number(e.target.value))}
                 />
               </div>
               <hr className="divider" />
@@ -781,7 +811,7 @@ export default function App({ onLogout }) {
                   }}
                 >
                   <span>Gastos</span>
-                  <span style={{ color: '#e05a6b' }}>−{fmt(expenses)}</span>
+                  <span style={{ color: '#e05a6b' }}>−{fmt(livingExpenses)}</span>
                 </div>
                 <div
                   style={{

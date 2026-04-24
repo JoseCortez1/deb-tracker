@@ -1089,3 +1089,301 @@ canvas {
     transform: translateY(0);
   }
 }
+
+/* —— Módulo: registro de gastos —— */
+.input-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.input-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(240, 192, 64, 0.08);
+}
+
+.input-error {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--accent3);
+  margin-top: 2px;
+}
+
+.expenses-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.expense-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 720px) {
+  .expense-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.expense-summary-card .stat-value {
+  font-size: clamp(18px, 4vw, 24px);
+}
+
+.expense-summary-topcat {
+  font-size: clamp(14px, 3.5vw, 18px) !important;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.expense-filters-card {
+  margin-bottom: 20px;
+}
+
+.expense-filters-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.expense-filter-field {
+  margin-bottom: 0;
+}
+
+.expense-filter-field .input-select {
+  max-width: 280px;
+}
+
+.expense-cat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.expense-cat-all {
+  font-size: 11px;
+  padding: 6px 12px;
+}
+
+.expense-cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--mono);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.expense-cat-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.expense-cat-chip.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(240, 192, 64, 0.08);
+}
+
+.expense-recurring-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.expense-rec-tab {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.expense-rec-tab:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.expense-rec-tab.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(240, 192, 64, 0.1);
+}
+
+.expense-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.expense-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color 0.2s;
+}
+
+.expense-card:hover {
+  border-color: rgba(240, 192, 64, 0.35);
+}
+
+.expense-card-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.expense-card-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.expense-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.expense-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.expense-card-title {
+  font-weight: 700;
+  font-size: 15px;
+  word-break: break-word;
+}
+
+.expense-badge {
+  font-size: 10px;
+  font-family: var(--mono);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(167, 139, 250, 0.15);
+  color: var(--purple);
+}
+
+.expense-card-meta {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+  margin-top: 4px;
+}
+
+.expense-card-amount {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent);
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.expense-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.expense-card-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.expense-card-actions-sep {
+  color: var(--border);
+  font-size: 12px;
+  user-select: none;
+}
+
+.expense-empty {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.expense-empty-icon {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 12px;
+  opacity: 0.85;
+}
+
+.expense-empty-text {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 20px;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.expense-toggle-row {
+  margin-bottom: 0;
+}
+
+.expense-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--font);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.expense-toggle-label input {
+  width: auto;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.expense-form-modal {
+  max-width: 440px;
+}
