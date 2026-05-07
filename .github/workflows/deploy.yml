@@ -1,0 +1,42 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+        env:
+          VITE_AUTH_USERNAME: ${{ secrets.AUTH_USERNAME }}
+          VITE_AUTH_PASSWORD: ${{ secrets.AUTH_PASSWORD }}
+
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /var/projects/internal/deb-tracker
+            git pull origin main
+            npm ci
+            npm run build
+            pkill -f 'vite preview --port 3103' || true
+            nohup npm run preview -- --host 0.0.0.0 --port 3103 > /dev/null 2>&1 &
