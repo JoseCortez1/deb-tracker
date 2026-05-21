@@ -1,7 +1,8 @@
-import { ALL_EXPENSE_CATEGORIES, ExpenseCategory } from '../types/expense.types.js';
+import { ALL_EXPENSE_CATEGORIES, BUILT_IN_CATEGORIES, CUSTOM_CATEGORIES_STORAGE_KEY, ExpenseCategory } from '../types/expense.types.js';
+import { load, save } from '../../../utils/storage.js';
 
-/** @type {Record<import('../types/expense.types.js').ExpenseCategory, string>} */
-export const CATEGORY_LABELS = {
+/** @type {Record<string, string>} */
+const BUILT_IN_LABELS = {
   [ExpenseCategory.FOOD]: 'Comida y restaurantes',
   [ExpenseCategory.TRANSPORT]: 'Transporte',
   [ExpenseCategory.HOUSING]: 'Hogar y renta',
@@ -13,8 +14,8 @@ export const CATEGORY_LABELS = {
   [ExpenseCategory.OTHER]: 'Otros',
 };
 
-/** @type {Record<import('../types/expense.types.js').ExpenseCategory, string>} */
-export const CATEGORY_ICONS = {
+/** @type {Record<string, string>} */
+const BUILT_IN_ICONS = {
   [ExpenseCategory.FOOD]: '🍽️',
   [ExpenseCategory.TRANSPORT]: '🚗',
   [ExpenseCategory.HOUSING]: '🏠',
@@ -51,9 +52,6 @@ export function formatExpenseDateShort(isoDate, locale = 'es-MX') {
   return dt.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-/**
- * YYYY-MM del mes actual (calendario local).
- */
 export function getCurrentMonthKey() {
   const n = new Date();
   const y = n.getFullYear();
@@ -61,9 +59,14 @@ export function getCurrentMonthKey() {
   return `${y}-${m}`;
 }
 
-/**
- * Meses desde (actual - 11) hasta actual, cada uno `{ value: 'YYYY-MM', label }`.
- */
+export function getTodayKey() {
+  const n = new Date();
+  const y = n.getFullYear();
+  const m = String(n.getMonth() + 1).padStart(2, '0');
+  const d = String(n.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export function getMonthOptionsForFilter() {
   const now = new Date();
   const out = [];
@@ -78,51 +81,83 @@ export function getMonthOptionsForFilter() {
   return out;
 }
 
-/**
- * @param {string} monthKey — YYYY-MM
- */
 export function isDateInMonth(isoDate, monthKey) {
   return typeof isoDate === 'string' && isoDate.startsWith(monthKey);
 }
 
-/**
- * Resumen del mes calendario actual (no el mes del filtro de lista).
- * @param {import('../types/expense.types.js').Expense[]} expenses — todos del usuario
- */
-export function computeCurrentMonthSummary(expenses) {
-  const monthKey = getCurrentMonthKey();
-  const inMonth = expenses.filter((e) => isDateInMonth(e.date, monthKey));
-  const totalMonth = inMonth.reduce((s, e) => s + (Number(e.amount) || 0), 0);
-  const recurringTotal = inMonth
-    .filter((e) => e.isRecurring)
-    .reduce((s, e) => s + (Number(e.amount) || 0), 0);
+export function isDateInRange(isoDate, dateFrom, dateTo) {
+  return typeof isoDate === 'string' && isoDate >= dateFrom && isoDate <= dateTo;
+}
 
-  /** @type {Map<string, number>} */
+// ─── CATEGORÍAS CUSTOM ───
+
+export function loadCustomCategories() {
+  return load(CUSTOM_CATEGORIES_STORAGE_KEY, []);
+}
+
+export function saveCustomCategories(cats) {
+  save(CUSTOM_CATEGORIES_STORAGE_KEY, cats);
+}
+
+export function addCustomCategory(name, icon = '📌', color = '#6b7280') {
+  const cats = loadCustomCategories();
+  const cat = { id: `custom-${Date.now()}`, name: name.trim(), icon, color, createdAt: Date.now() };
+  cats.push(cat);
+  saveCustomCategories(cats);
+  return cat;
+}
+
+export function removeCustomCategory(id) {
+  const cats = loadCustomCategories().filter((c) => c.id !== id);
+  saveCustomCategories(cats);
+}
+
+export function getAllCategories() {
+  const customs = loadCustomCategories();
+  return [...BUILT_IN_CATEGORIES, ...customs.map((c) => c.id)];
+}
+
+export function getCategoryLabel(catId) {
+  if (BUILT_IN_LABELS[catId]) return BUILT_IN_LABELS[catId];
+  const customs = loadCustomCategories();
+  const found = customs.find((c) => c.id === catId);
+  return found ? found.name : catId;
+}
+
+export function getCategoryIcon(catId) {
+  if (BUILT_IN_ICONS[catId]) return BUILT_IN_ICONS[catId];
+  const customs = loadCustomCategories();
+  const found = customs.find((c) => c.id === catId);
+  return found ? found.icon : '📌';
+}
+
+export function isBuiltInCategory(catId) {
+  return BUILT_IN_CATEGORIES.includes(catId);
+}
+
+// ─── SUMMARY ───
+
+export function computeExpensesSummary(expenses) {
+  const total = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+  const recurringTotal = expenses.filter((e) => e.isRecurring).reduce((s, e) => s + (Number(e.amount) || 0), 0);
   const byCat = new Map();
-  for (const e of inMonth) {
+  for (const e of expenses) {
     const a = Number(e.amount) || 0;
     byCat.set(e.category, (byCat.get(e.category) || 0) + a);
   }
   let topKey = null;
   let topSum = 0;
-  for (const cat of ALL_EXPENSE_CATEGORIES) {
-    const v = byCat.get(cat) || 0;
-    if (v > topSum) {
-      topSum = v;
-      topKey = cat;
-    }
+  for (const [cat, sum] of byCat) {
+    if (sum > topSum) { topSum = sum; topKey = cat; }
   }
-
   return {
-    totalMonth,
+    total,
     recurringTotal,
-    topCategory: topKey && topSum > 0 ? { key: topKey, label: CATEGORY_LABELS[topKey] } : null,
+    topCategory: topKey && topSum > 0 ? { key: topKey, label: getCategoryLabel(topKey) } : null,
+    count: expenses.length,
   };
 }
 
-/**
- * @param {import('../types/expense.types.js').Expense[]} list
- */
 export function sortExpensesByDateDesc(list) {
   return [...list].sort((a, b) => {
     const da = a.date.localeCompare(b.date);

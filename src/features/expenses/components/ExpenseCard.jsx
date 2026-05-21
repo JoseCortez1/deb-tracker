@@ -1,4 +1,4 @@
-import { CATEGORY_ICONS, CATEGORY_LABELS, formatExpenseDateShort, formatExpenseMoney } from '../utils/expense.utils.js';
+import { getCategoryIcon, getCategoryLabel, formatExpenseDateShort, formatExpenseMoney } from '../utils/expense.utils.js';
 
 /**
  * @param {{
@@ -9,8 +9,8 @@ import { CATEGORY_ICONS, CATEGORY_LABELS, formatExpenseDateShort, formatExpenseM
  */
 export function ExpenseCard({ expense, onEdit, onDelete }) {
   const desc = (expense.description || '').trim();
-  const title = desc || CATEGORY_LABELS[expense.category] || expense.category;
-  const icon = CATEGORY_ICONS[expense.category] || '📌';
+  const title = desc || getCategoryLabel(expense.category) || expense.category;
+  const icon = getCategoryIcon(expense.category) || '📌';
 
   return (
     <div className="expense-card">
