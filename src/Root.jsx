@@ -1,43 +1,34 @@
-import { useEffect, useState } from 'react';
 import App from './App.jsx';
-import { clearSession, isSessionValid } from './auth/session.js';
 import { LoginScreen } from './components/LoginScreen.jsx';
+import { AuthProvider, useAuth } from './auth/AuthContext.jsx';
 import { NavigationProvider } from './navigation/NavigationContext.jsx';
 
-export function Root() {
-  const [phase, setPhase] = useState('checking');
+function RootInner() {
+  const { user, loading, logout } = useAuth();
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const ok = await isSessionValid();
-      if (!cancelled) setPhase(ok ? 'authed' : 'guest');
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (phase === 'checking') {
+  if (loading) {
     return (
       <div className="login-page login-page--bare">
-        <p className="login-loading-text">Verificando sesión…</p>
+        <p className="login-loading-text">Verificando sesi\u00f3n\u2026</p>
       </div>
     );
   }
 
-  if (phase === 'guest') {
-    return <LoginScreen onSuccess={() => setPhase('authed')} />;
+  if (!user) {
+    return <LoginScreen />;
   }
 
   return (
     <NavigationProvider>
-      <App
-        onLogout={() => {
-          clearSession();
-          setPhase('guest');
-        }}
-      />
+      <App onLogout={logout} />
     </NavigationProvider>
+  );
+}
+
+export function Root() {
+  return (
+    <AuthProvider>
+      <RootInner />
+    </AuthProvider>
   );
 }

@@ -1,88 +1,28 @@
-import { useEffect, useId, useState } from 'react';
-import {
-  clearFailedAttempts,
-  expireLockoutIfNeeded,
-  FAILS_KEY,
-  getLockoutRemainingMs,
-  MAX_FAILS,
-  persistSession,
-  registerFailedAttempt,
-  verifyCredentials,
-} from '../auth/session.js';
+import { useId, useState } from 'react';
+import { useAuth } from '../auth/AuthContext.jsx';
 
-function formatLockout(ms) {
-  const s = Math.ceil(ms / 1000);
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return m > 0 ? `${m} min ${r} s` : `${r} s`;
-}
-
-export function LoginScreen({ onSuccess }) {
-  const formId = useId();
-  const [user, setUser] = useState('');
-  const [pass, setPass] = useState('');
-  const [showPass, setShowPass] = useState(false);
+export function LoginScreen() {
+  const titleId = useId();
+  const { login, signup } = useAuth();
+  const [mode, setMode] = useState('login');
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [lockRemaining, setLockRemaining] = useState(() =>
-    getLockoutRemainingMs()
-  );
 
-  useEffect(() => {
-    expireLockoutIfNeeded();
-    setLockRemaining(getLockoutRemainingMs());
-  }, []);
-
-  useEffect(() => {
-    const t = setInterval(() => {
-      expireLockoutIfNeeded();
-      setLockRemaining(getLockoutRemainingMs());
-    }, 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  const locked = lockRemaining > 0;
-
-  const tickLockout = () => {
-    const ms = getLockoutRemainingMs();
-    setLockRemaining(ms);
-    return ms;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (ev) => {
+    ev.preventDefault();
     setError('');
-    expireLockoutIfNeeded();
-
-    if (tickLockout() > 0) {
-      setError('Demasiados intentos. Espera antes de volver a intentar.');
-      return;
-    }
-
     setBusy(true);
     try {
-      const ok = await verifyCredentials(user.trim(), pass);
-      if (ok) {
-        clearFailedAttempts();
-        await persistSession(user.trim());
-        onSuccess();
-        return;
-      }
-      registerFailedAttempt();
-      if (getLockoutRemainingMs() > 0) {
-        setError(
-          'Demasiados intentos fallidos. Espera el tiempo indicado abajo.'
-        );
+      if (mode === 'login') {
+        await login(email, password);
       } else {
-        const fails = Number(sessionStorage.getItem(FAILS_KEY) || '0');
-        const left = Math.max(0, MAX_FAILS - fails);
-        setError(
-          left > 0
-            ? `Usuario o contraseña incorrectos. Intentos restantes: ${left}.`
-            : 'Usuario o contraseña incorrectos.'
-        );
+        await signup(email, username, password);
       }
-      tickLockout();
+    } catch (err) {
+      setError(err.message);
     } finally {
       setBusy(false);
     }
@@ -91,75 +31,82 @@ export function LoginScreen({ onSuccess }) {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h1 className="login-brand">
-          Plan de <span>Liquidación</span>
-        </h1>
-        <p className="login-sub">Acceso protegido · sesión cifrada en este equipo</p>
+        <div className="login-brand">
+          <span>Debt</span> Tracker
+        </div>
+        <p className="login-sub">
+          {mode === 'login' ? 'Inicia sesión para continuar' : 'Crea tu cuenta'}
+        </p>
 
-        {locked ? (
-          <div className="login-banner login-banner--warn" role="status">
-            Bloqueo temporal activo. Tiempo restante:{' '}
-            <strong>{formatLockout(lockRemaining)}</strong>
-          </div>
-        ) : null}
-
-        <form className="login-form" onSubmit={handleSubmit} autoComplete="on">
-          <div className="input-group">
-            <label htmlFor={`${formId}-user`}>Usuario</label>
-            <input
-              id={`${formId}-user`}
-              name="username"
-              type="text"
-              autoComplete="username"
-              value={user}
-              onChange={(e) => setUser(e.target.value)}
-              disabled={locked || busy}
-              required
-              autoCapitalize="off"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-          </div>
-
-          <div className="input-group">
-            <label htmlFor={`${formId}-pass`}>Contraseña</label>
-            <div className="login-pass-row">
-              <input
-                id={`${formId}-pass`}
-                name="password"
-                type={showPass ? 'text' : 'password'}
-                autoComplete="current-password"
-                value={pass}
-                onChange={(e) => setPass(e.target.value)}
-                disabled={locked || busy}
-                required
-              />
-              <button
-                type="button"
-                className="btn-ghost login-toggle-pass"
-                onClick={() => setShowPass((s) => !s)}
-                disabled={locked || busy}
-                aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-              >
-                {showPass ? '🙈' : '👁'}
-              </button>
-            </div>
-          </div>
-
-          {error ? (
+        <form onSubmit={handleSubmit} className="login-form">
+          {error && (
             <div className="login-error" role="alert">
               {error}
             </div>
-          ) : null}
+          )}
 
-          <button
-            type="submit"
-            className="btn login-submit"
-            disabled={locked || busy}
-          >
-            {busy ? 'Verificando…' : 'Entrar'}
+          <div className="input-group">
+            <label htmlFor={'$'+'{titleId}-email'}>Email</label>
+            <input
+              id={'$'+'{titleId}-email'}
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              disabled={busy}
+            />
+          </div>
+
+          {mode === 'signup' && (
+            <div className="input-group">
+              <label htmlFor={'$'+'{titleId}-user'}>Usuario</label>
+              <input
+                id={'$'+'{titleId}-user'}
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Nombre de usuario"
+                disabled={busy}
+              />
+            </div>
+          )}
+
+          <div className="input-group">
+            <label htmlFor={'$'+'{titleId}-pass'}>Contraseña</label>
+            <input
+              id={'$'+'{titleId}-pass'}
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mínimo 6 caracteres"
+              disabled={busy}
+            />
+          </div>
+
+          <button type="submit" className="btn login-submit" disabled={busy}>
+            {busy ? 'Cargando\u2026' : mode === 'login' ? 'Iniciar sesi\u00f3n' : 'Crear cuenta'}
           </button>
         </form>
+
+        <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: 'var(--muted)' }}>
+          {mode === 'login' ? (
+            <>{'¿No tienes cuenta? '}
+              <button type="button" className="btn-ghost" style={{ padding: '2px 4px' }} onClick={() => { setMode('signup'); setError(''); }}>
+                Regístrate
+              </button>
+            </>
+          ) : (
+            <>{'¿Ya tienes cuenta? '}
+              <button type="button" className="btn-ghost" style={{ padding: '2px 4px' }} onClick={() => { setMode('login'); setError(''); }}>
+                Inicia sesión
+              </button>
+            </>
+          )}
+        </p>
       </div>
     </div>
   );

@@ -1,21 +1,28 @@
 import { useMemo, useState } from 'react';
 import { useExpenses } from '../hooks/useExpenses.js';
+import { api } from '../../../api.js';
 import { getAllCategories, getCategoryLabel, getCategoryIcon, getMonthOptionsForFilter, getTodayKey, getCurrentMonthKey } from '../utils/expense.utils.js';
 import { ExpenseCard } from './ExpenseCard.jsx';
 import { ExpenseFormModal } from './ExpenseFormModal.jsx';
 import { ExpenseSummaryCards } from './ExpenseSummaryCards.jsx';
 import { CategoryManager } from './CategoryManager.jsx';
 
-export function ExpensesPage({ userId }) {
+export function ExpensesPage() {
   const {
     expenses, filters, setFilters, addExpense, updateExpense, deleteExpense,
-    summary, customCategories, addCustomCategory, removeCustomCategory,
-  } = useExpenses(userId);
+    summary, refresh,
+  } = useExpenses();
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState('add');
   const [editing, setEditing] = useState(null);
   const [catManagerOpen, setCatManagerOpen] = useState(false);
+  const [customCategories, setCustomCategories] = useState([]);
+
+  // Load custom categories from API
+  useState(() => {
+    api.get('/api/categories').then(setCustomCategories).catch(() => {});
+  });
 
   const monthOptions = useMemo(() => getMonthOptionsForFilter(), []);
   const allCategoryIds = useMemo(() => getAllCategories(), [customCategories]);
@@ -25,9 +32,10 @@ export function ExpensesPage({ userId }) {
   const handleFormSubmit = (data) => {
     if (formMode === 'add') addExpense(data);
     else if (editing) updateExpense(editing.id, data);
+    refresh();
   };
   const handleDelete = (exp) => {
-    if (window.confirm('¿Eliminar este gasto? Esta acción no se puede deshacer.')) deleteExpense(exp.id);
+    if (window.confirm('Eliminar este gasto? Esta acci\u00f3n no se puede deshacer.')) deleteExpense(exp.id);
   };
 
   const toggleCategory = (cat) => {
@@ -39,14 +47,32 @@ export function ExpensesPage({ userId }) {
   };
   const selectAllCategories = () => setFilters((prev) => ({ ...prev, categories: [...allCategoryIds] }));
 
+  const handleAddCategory = async (name, icon) => {
+    try {
+      const created = await api.post('/api/categories', { name, icon });
+      setCustomCategories((prev) => [...prev, created]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRemoveCategory = async (id) => {
+    try {
+      await api.del('/api/categories/' + id);
+      setCustomCategories((prev) => prev.filter((c) => c.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="animate-in expenses-page">
       <div className="expenses-section-head">
         <div className="section-title section-title--inline">
-          Registro de Gastos <span>· Base de hábitos de gasto</span>
+          Registro de Gastos <span>· Base de h\u00e1bitos de gasto</span>
         </div>
         <div className="expenses-head-actions">
-          <button type="button" className="btn btn-ghost" onClick={() => setCatManagerOpen(true)}>⚙️ Categorías</button>
+          <button type="button" className="btn btn-ghost" onClick={() => setCatManagerOpen(true)}>Gesti\u00f3n Categor\u00edas</button>
           <button type="button" className="btn" onClick={openAdd}>Agregar gasto</button>
         </div>
       </div>
@@ -76,12 +102,12 @@ export function ExpensesPage({ userId }) {
             <div className="expense-filter-date-clear">
               <button type="button" className="btn-ghost expense-cat-all"
                 onClick={() => setFilters((p) => ({ ...p, dateFrom: '', dateTo: '', monthKey: getCurrentMonthKey() }))}>
-                ✕ Quitar rango
+                Quitar rango
               </button>
             </div>
           )}
           <div className="input-group expense-filter-field expense-filter-cats">
-            <span className="modal-label-block">Categorías</span>
+            <span className="modal-label-block">Categor\u00edas</span>
             <div className="expense-cat-chips">
               <button type="button" className="btn-ghost expense-cat-all" onClick={selectAllCategories}>Todas</button>
               {allCategoryIds.map((cat) => {
@@ -97,7 +123,7 @@ export function ExpensesPage({ userId }) {
           </div>
         </div>
         <div className="expense-recurring-tabs" role="group" aria-label="Tipo de gasto">
-          {[['all', 'Todos'], ['recurring', 'Solo recurrentes'], ['unique', 'Solo únicos']].map(([k, label]) => (
+          {[['all', 'Todos'], ['recurring', 'Solo recurrentes'], ['unique', 'Solo \u00fanicos']].map(([k, label]) => (
             <button key={k} type="button"
               className={`expense-rec-tab${filters.recurringFilter === k ? ' active' : ''}`}
               onClick={() => setFilters((p) => ({ ...p, recurringFilter: k }))}>{label}</button>
@@ -108,8 +134,8 @@ export function ExpensesPage({ userId }) {
       <div className="expense-list">
         {expenses.length === 0 ? (
           <div className="expense-empty">
-            <div className="expense-empty-icon" aria-hidden="true">🧾</div>
-            <p className="expense-empty-text">No hay gastos registrados para este período</p>
+            <div className="expense-empty-icon" aria-hidden="true">{'\uD83E\uDDFE'}</div>
+            <p className="expense-empty-text">No hay gastos registrados para este per\u00edodo</p>
             <button type="button" className="btn" onClick={openAdd}>Agregar primer gasto</button>
           </div>
         ) : expenses.map((e) => (
@@ -120,7 +146,7 @@ export function ExpensesPage({ userId }) {
       <ExpenseFormModal open={formOpen} mode={formMode} initial={editing} onClose={() => setFormOpen(false)}
         onSubmit={handleFormSubmit} customCategories={customCategories} />
       <CategoryManager open={catManagerOpen} onClose={() => setCatManagerOpen(false)}
-        customCategories={customCategories} addCustomCategory={addCustomCategory} removeCustomCategory={removeCustomCategory} />
+        customCategories={customCategories} addCustomCategory={handleAddCategory} removeCustomCategory={handleRemoveCategory} />
     </div>
   );
 }
