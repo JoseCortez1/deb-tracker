@@ -9,7 +9,7 @@ function RootInner() {
   if (loading) {
     return (
       <div className="login-page login-page--bare">
-        <p className="login-loading-text">Verificando sesi\u00f3n\u2026</p>
+        <p className="login-loading-text">Verificando sesión…</p>
       </div>
     );
   }

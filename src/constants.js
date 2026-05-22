@@ -113,14 +113,6 @@ export const EXTRA_DEBT_COLORS = [
 export const DEFAULT_INCOME = 0;
 export const DEFAULT_EXPENSES = 0;
 
-export const GOLDEN_RULES = [
-  'El día 15, lo primero es transferir a BBVA — antes de gastar un peso.',
-  'Nu débito es para el día a día — si algo no cabe en Nu, no es urgente.',
-  'Las tarjetas de ciclo (Plata, Stori, Didi) se pagan en su totalidad cada mes.',
-  'Si hay un gasto imprevisto, ajusta en otro lado antes de cargarlo a tarjeta.',
-  'Una negociación exitosa con Nu puede cambiar el plan. Insiste.',
-  'La despensa es temporal — se retoma en cuanto Banamex caiga.',
-];
 
 /** [id, emoji, etiqueta accesible] — en móvil solo se muestra el emoji */
 export const TABS = [

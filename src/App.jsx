@@ -11,10 +11,9 @@ import {
   DEFAULT_EXPENSES,
   DEFAULT_INCOME,
   EXTRA_DEBT_COLORS,
-  GOLDEN_RULES,
   TABS,
-  TIMELINE,
 } from './constants.js';
+import { calculatePayoffTimeline } from './utils/payoff.js';
 import { useNavigation } from './navigation/NavigationContext.jsx';
 import { fmt, pct } from './utils/format.js';
 
@@ -27,6 +26,10 @@ export default function App() {
   const [income, setIncome] = useState(DEFAULT_INCOME);
   const [livingExpenses, setLivingExpenses] = useState(DEFAULT_EXPENSES);
   const [completedMonths, setCompletedMonths] = useState([]);
+  const [startMonth, setStartMonth] = useState(() => {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  });
   const [identityModal, setIdentityModal] = useState(null);
 
   // Load initial data from API
@@ -34,12 +37,14 @@ export default function App() {
     api.get('/api/debts').then(setDebts).catch(() => {});
     api.get('/api/config/income').then(d => { if (d.value) setIncome(Number(d.value)); }).catch(() => {});
     api.get('/api/config/expenses').then(d => { if (d.value) setLivingExpenses(Number(d.value)); }).catch(() => {});
+    api.get('/api/config/startMonth').then(d => { if (d.value) setStartMonth(d.value); }).catch(() => {});
     api.get('/api/config/completedMonths').then(d => { if (d.value) setCompletedMonths(JSON.parse(d.value)); }).catch(() => {});
   }, []);
 
   // Save data to API on change
   useEffect(() => { api.put('/api/config/income', { value: String(income) }).catch(() => {}); }, [income]);
   useEffect(() => { api.put('/api/config/expenses', { value: String(livingExpenses) }).catch(() => {}); }, [livingExpenses]);
+  useEffect(() => { api.put('/api/config/startMonth', { value: startMonth }).catch(() => {}); }, [startMonth]);
   useEffect(() => { api.put('/api/config/completedMonths', { value: JSON.stringify(completedMonths) }).catch(() => {}); }, [completedMonths]);
 
   // Sync debts to API
@@ -60,6 +65,7 @@ export default function App() {
   const totalPaid = totalInitial - totalCurrent;
   const progress = pct(totalPaid, totalInitial);
   const minPayments = debts.filter((d) => !d.paid).reduce((s, d) => s + Number(d.minPayment), 0);
+  const payoffTimeline = React.useMemo(() => calculatePayoffTimeline(debts, income, livingExpenses, startMonth), [debts, income, livingExpenses, startMonth]);
   const available = income - livingExpenses - minPayments;
 
   useEffect(() => {
@@ -220,10 +226,6 @@ export default function App() {
           </div>
 
           <div className="card">
-            <div className="card-title"><span className="dot" /> Reglas de Oro</div>
-            <ul className="rules-list">
-              {GOLDEN_RULES.map((r, i) => (<li key={i}><span className="num">{i + 1}</span>{r}</li>))}
-            </ul>
           </div>
         </div>
       )}
@@ -312,32 +314,57 @@ export default function App() {
 
       {tab === 'timeline' && (
         <div className="animate-in">
-          <div className="section-title">Ruta al 0 <span>· Marca los meses completados</span></div>
+          <div className="section-title">Ruta al 0 <span>{'·'} Plan de pago personalizado</span></div>
           <div className="timeline">
-            {TIMELINE.map((item, i) => {
-              const done = completedMonths.includes(i);
-              return (
-                <div key={i} className="tl-item">
-                  <div className="tl-date"><strong>{item.date.split(' ')[0]}</strong>{item.date.split(' ')[1]}</div>
-                  <div className="tl-line-wrap">
-                    <div className={`tl-dot${done ? ' done' : ''}`} style={{ '--dot-color': done ? '#4fd1a5' : '#1f2a45' }}>{done ? '✓' : i + 1}</div>
-                    {i < TIMELINE.length - 1 && <div className="tl-connector" />}
+            {payoffTimeline.length === 0 ? (
+              <p style={{ color: 'var(--muted)', textAlign: 'center', padding: 40, fontFamily: 'var(--mono)' }}>
+                Ajusta tu ingreso, gastos y mes de inicio en Configuración para generar tu ruta.
+              </p>
+            ) : (
+              payoffTimeline.map((item, i) => {
+                const done = completedMonths.includes(i);
+                const totalDebt = item.debts.reduce((s, d) => s + d.balance, 0);
+                return (
+                  <div key={i} className="tl-item">
+                    <div className="tl-date">
+                      <strong>{item.month.split(' ')[0]}</strong>
+                      {' '}{item.month.split(' ').slice(1).join(' ')}
+                    </div>
+                    <div className="tl-line-wrap">
+                      <div className={`tl-dot${done ? ' done' : ''}`}
+                        style={{ '--dot-color': done ? '#4fd1a5' : '#1f2a45' }}>
+                        {done ? '✓' : i + 1}
+                      </div>
+                      {i < payoffTimeline.length - 1 && <div className="tl-connector" />}
+                    </div>
+                    <div role="button" tabIndex={0}
+                      className={`tl-body${done ? ' done' : ''}`}
+                      onClick={() => toggleMonth(i)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMonth(i); } }}
+                      style={{ cursor: 'pointer' }}>
+                      <div className="tl-month">{item.month}</div>
+                      <div className="tl-goal">{item.goal || 'Pagando deudas'}</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 6 }}>
+                        {item.debts.filter(d => d.balance > 0).map(d => (
+                          <span key={d.id} className="tl-badge"
+                            style={{ background: d.color + '22', color: 'var(--text)' }}>
+                            {d.emoji} {fmt(d.balance)}
+                          </span>
+                        ))}
+                      </div>
+                      {item.badge && <span className="tl-badge" style={{ marginTop: 4 }}>{item.badge}</span>}
+                      {done && <span className="tl-badge" style={{ marginLeft: 8, background: 'rgba(240,192,64,0.1)', color: 'var(--accent)' }}>COMPLETADO</span>}
+                      <div style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)', marginTop: 6 }}>
+                        Restante: {fmt(totalDebt)}
+                      </div>
+                    </div>
                   </div>
-                  <div role="button" tabIndex={0} className={`tl-body${done ? ' done' : ''}`} onClick={() => toggleMonth(i)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMonth(i); } }} style={{ cursor: 'pointer' }}>
-                    <div className="tl-month">{item.month}</div>
-                    <div className="tl-goal">{item.goal}</div>
-                    <span className="tl-badge">{item.badge}</span>
-                    {done && <span className="tl-badge" style={{ marginLeft: 8, background: 'rgba(240,192,64,0.1)', color: 'var(--accent)' }}>COMPLETADO</span>}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
-          <p style={{ color: 'var(--muted)', fontSize: 12, fontFamily: 'var(--mono)', marginTop: 16 }}>Toca cualquier mes para marcarlo como completado</p>
         </div>
-      )}
-
-      {tab === 'settings' && (
+      )}      {tab === 'settings' && (
         <div className="animate-in">
           <div className="section-title">Configuración <span>· Ajusta tus números reales</span></div>
           <div className="two-col-settings" style={{ marginBottom: 24 }}>

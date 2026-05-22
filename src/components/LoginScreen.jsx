@@ -88,7 +88,7 @@ export function LoginScreen() {
           </div>
 
           <button type="submit" className="btn login-submit" disabled={busy}>
-            {busy ? 'Cargando\u2026' : mode === 'login' ? 'Iniciar sesi\u00f3n' : 'Crear cuenta'}
+            {busy ? 'Cargando…' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
           </button>
         </form>
 

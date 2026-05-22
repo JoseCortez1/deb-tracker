@@ -35,7 +35,7 @@ export function ExpensesPage() {
     refresh();
   };
   const handleDelete = (exp) => {
-    if (window.confirm('Eliminar este gasto? Esta acci\u00f3n no se puede deshacer.')) deleteExpense(exp.id);
+    if (window.confirm('Eliminar este gasto? Esta acción no se puede deshacer.')) deleteExpense(exp.id);
   };
 
   const toggleCategory = (cat) => {
@@ -69,10 +69,10 @@ export function ExpensesPage() {
     <div className="animate-in expenses-page">
       <div className="expenses-section-head">
         <div className="section-title section-title--inline">
-          Registro de Gastos <span>· Base de h\u00e1bitos de gasto</span>
+          Registro de Gastos <span>· Base de hábitos de gasto</span>
         </div>
         <div className="expenses-head-actions">
-          <button type="button" className="btn btn-ghost" onClick={() => setCatManagerOpen(true)}>Gesti\u00f3n Categor\u00edas</button>
+          <button type="button" className="btn btn-ghost" onClick={() => setCatManagerOpen(true)}>Gestión Categorías</button>
           <button type="button" className="btn" onClick={openAdd}>Agregar gasto</button>
         </div>
       </div>
@@ -107,7 +107,7 @@ export function ExpensesPage() {
             </div>
           )}
           <div className="input-group expense-filter-field expense-filter-cats">
-            <span className="modal-label-block">Categor\u00edas</span>
+            <span className="modal-label-block">Categorías</span>
             <div className="expense-cat-chips">
               <button type="button" className="btn-ghost expense-cat-all" onClick={selectAllCategories}>Todas</button>
               {allCategoryIds.map((cat) => {
@@ -123,7 +123,7 @@ export function ExpensesPage() {
           </div>
         </div>
         <div className="expense-recurring-tabs" role="group" aria-label="Tipo de gasto">
-          {[['all', 'Todos'], ['recurring', 'Solo recurrentes'], ['unique', 'Solo \u00fanicos']].map(([k, label]) => (
+          {[['all', 'Todos'], ['recurring', 'Solo recurrentes'], ['unique', 'Solo únicos']].map(([k, label]) => (
             <button key={k} type="button"
               className={`expense-rec-tab${filters.recurringFilter === k ? ' active' : ''}`}
               onClick={() => setFilters((p) => ({ ...p, recurringFilter: k }))}>{label}</button>
@@ -135,7 +135,7 @@ export function ExpensesPage() {
         {expenses.length === 0 ? (
           <div className="expense-empty">
             <div className="expense-empty-icon" aria-hidden="true">{'\uD83E\uDDFE'}</div>
-            <p className="expense-empty-text">No hay gastos registrados para este per\u00edodo</p>
+            <p className="expense-empty-text">No hay gastos registrados para este período</p>
             <button type="button" className="btn" onClick={openAdd}>Agregar primer gasto</button>
           </div>
         ) : expenses.map((e) => (
