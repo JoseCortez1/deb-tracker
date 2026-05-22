@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from './api.js';
 import { useAuth } from './auth/AuthContext.jsx';
 import { BarChart } from './components/BarChart.jsx';
@@ -65,7 +65,7 @@ export default function App() {
   const totalPaid = totalInitial - totalCurrent;
   const progress = pct(totalPaid, totalInitial);
   const minPayments = debts.filter((d) => !d.paid).reduce((s, d) => s + Number(d.minPayment), 0);
-  const payoffTimeline = React.useMemo(() => calculatePayoffTimeline(debts, income, livingExpenses, startMonth), [debts, income, livingExpenses, startMonth]);
+  const payoffTimeline = useMemo(() => calculatePayoffTimeline(debts, income, livingExpenses, startMonth), [debts, income, livingExpenses, startMonth]);
   const available = income - livingExpenses - minPayments;
 
   useEffect(() => {
