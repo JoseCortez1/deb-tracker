@@ -110,8 +110,8 @@ export const EXTRA_DEBT_COLORS = [
   '#f87171',
 ];
 
-export const DEFAULT_INCOME = 27000;
-export const DEFAULT_EXPENSES = 15470;
+export const DEFAULT_INCOME = 0;
+export const DEFAULT_EXPENSES = 0;
 
 export const GOLDEN_RULES = [
   'El día 15, lo primero es transferir a BBVA — antes de gastar un peso.',

@@ -111,12 +111,12 @@ export default function App() {
     <div className="app">
       <div className="header">
         <div className="header-left">
-          <h1>Plan de <span>Liquidaci\u00f3n</span></h1>
+          <h1>Plan de <span>Liquidación</span></h1>
           <div className="header-left-row">
-            <p>Inicio: Abril 2026 \u00b7 Sistema 2 cuentas</p>
+            <p>Inicio: Abril 2026 · Sistema 2 cuentas</p>
             <button type="button" className="btn-ghost header-logout"
-              onClick={() => { if (confirm('Cerrar sesi\u00f3n?')) logout(); }}>
-              Cerrar sesi\u00f3n
+              onClick={() => { if (confirm('Cerrar sesión?')) logout(); }}>
+              Cerrar sesión
             </button>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function App() {
           <div className="header-badge">
             <div className="label">Total restante</div>
             <div className="value">{fmt(totalCurrent)}</div>
-            <div className="sub">{progress}% liberado \u00b7 Meta: Sep 2026</div>
+            <div className="sub">{progress}% liberado · Meta: Sep 2026</div>
           </div>
         </div>
       </div>
@@ -157,15 +157,15 @@ export default function App() {
             <div className="stat-card" style={{ '--accent-color': '#4fd1a5' }}>
               <div className="stat-label">Disponible para atacar</div>
               <div className="stat-value" style={{ color: available > 0 ? '#4fd1a5' : '#e05a6b' }}>{fmt(available)}</div>
-              <div className="stat-sub">ingreso \u2212 gastos \u2212 m\u00ednimos</div>
+              <div className="stat-sub">ingreso − gastos − mínimos</div>
             </div>
             <div className="stat-card" style={{ '--accent-color': '#4a8cf7' }}>
               <div className="stat-label">Ingreso mensual</div>
               <div className="stat-value">{fmt(income)}</div>
-              <div className="stat-sub">d\u00eda 15 de cada mes</div>
+              <div className="stat-sub">día 15 de cada mes</div>
             </div>
             <div className="stat-card" style={{ '--accent-color': '#a78bfa' }}>
-              <div className="stat-label">M\u00ednimos totales</div>
+              <div className="stat-label">Mínimos totales</div>
               <div className="stat-value">{fmt(minPayments)}</div>
               <div className="stat-sub">{debts.filter((d) => !d.paid).length} deudas activas</div>
             </div>
@@ -173,13 +173,13 @@ export default function App() {
 
           <div className="grid-2">
             <div className="card">
-              <div className="card-title"><span className="dot" style={{ background: '#4a8cf7' }} /> Distribuci\u00f3n de deuda</div>
+              <div className="card-title"><span className="dot" style={{ background: '#4a8cf7' }} /> Distribución de deuda</div>
               <div className="chart-wrap" style={{ maxHeight: 240 }}><DonutChart debts={debts} /></div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '14px' }}>
                 {debts.map((d) => (
                   <span key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: d.paid ? '#4fd1a5' : '#6b7a9e', fontFamily: 'var(--mono)' }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, display: 'inline-block' }} />
-                    {d.name} {d.paid ? '\u2713' : fmt(d.currentBalance)}
+                    {d.name} {d.paid ? '✓' : fmt(d.currentBalance)}
                   </span>
                 ))}
               </div>
@@ -253,7 +253,7 @@ export default function App() {
                       <div className="debt-inputs">
                         <div><div className="debt-mini-label">Saldo inicial</div><input className="debt-mini-input" type="number" value={d.initialBalance} onChange={(e) => updateDebt(d.id, 'initialBalance', e.target.value)} /></div>
                         <div><div className="debt-mini-label">Saldo actual</div><input className="debt-mini-input" type="number" value={d.currentBalance} onChange={(e) => updateDebt(d.id, 'currentBalance', e.target.value)} /></div>
-                        <div><div className="debt-mini-label">Pago m\u00ednimo</div><input className="debt-mini-input" type="number" value={d.minPayment} onChange={(e) => updateDebt(d.id, 'minPayment', e.target.value)} /></div>
+                        <div><div className="debt-mini-label">Pago mínimo</div><input className="debt-mini-input" type="number" value={d.minPayment} onChange={(e) => updateDebt(d.id, 'minPayment', e.target.value)} /></div>
                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}><div className="debt-mini-label">Progreso</div><div style={{ fontFamily: 'var(--mono)', fontSize: 20, fontWeight: 800, color: d.color }}>{p}%</div></div>
                       </div>
                       <div className="debt-bar" style={{ marginTop: 12 }}><div className="debt-bar-fill" style={{ width: `${p}%`, '--bar-color': d.color }} /></div>
@@ -269,7 +269,7 @@ export default function App() {
               Total activo: <strong style={{ color: 'var(--accent)' }}>{fmt(totalCurrent)}</strong>
             </div>
             <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 16px', fontFamily: 'var(--mono)', fontSize: 13 }}>
-              M\u00ednimos: <strong style={{ color: 'var(--blue)' }}>{fmt(minPayments)}</strong>
+              Mínimos: <strong style={{ color: 'var(--blue)' }}>{fmt(minPayments)}</strong>
             </div>
           </div>
         </div>
@@ -277,14 +277,14 @@ export default function App() {
 
       {tab === 'charts' && (
         <div className="animate-in">
-          <div className="section-title">Gr\u00e1ficas <span>· Visualizaci\u00f3n del progreso</span></div>
+          <div className="section-title">Gráficas <span>· Visualización del progreso</span></div>
           <div className="card" style={{ marginBottom: 24 }}>
             <div className="card-title"><span className="dot" style={{ background: '#4a8cf7' }} /> Saldo inicial vs actual por deuda</div>
             <div className="chart-wrap"><BarChart debts={debts} /></div>
           </div>
           <div className="grid-2">
             <div className="card">
-              <div className="card-title"><span className="dot" style={{ background: '#a78bfa' }} /> Distribuci\u00f3n actual</div>
+              <div className="card-title"><span className="dot" style={{ background: '#a78bfa' }} /> Distribución actual</div>
               <div className="chart-wrap" style={{ maxHeight: 260 }}><DonutChart debts={debts} /></div>
             </div>
             <div className="card">
@@ -293,7 +293,7 @@ export default function App() {
                 {[
                   { label: 'Ingreso', value: income, color: '#4fd1a5', pct: 100 },
                   { label: 'Gastos vida', value: livingExpenses, color: '#4a8cf7', pct: pct(livingExpenses, income) },
-                  { label: 'M\u00ednimos', value: minPayments, color: '#a78bfa', pct: pct(minPayments, income) },
+                  { label: 'Mínimos', value: minPayments, color: '#a78bfa', pct: pct(minPayments, income) },
                   { label: 'Disponible ataque', value: Math.max(0, available), color: '#f0c040', pct: pct(Math.max(0, available), income) },
                 ].map((item) => (
                   <div key={item.label}>
@@ -320,7 +320,7 @@ export default function App() {
                 <div key={i} className="tl-item">
                   <div className="tl-date"><strong>{item.date.split(' ')[0]}</strong>{item.date.split(' ')[1]}</div>
                   <div className="tl-line-wrap">
-                    <div className={`tl-dot${done ? ' done' : ''}`} style={{ '--dot-color': done ? '#4fd1a5' : '#1f2a45' }}>{done ? '\u2713' : i + 1}</div>
+                    <div className={`tl-dot${done ? ' done' : ''}`} style={{ '--dot-color': done ? '#4fd1a5' : '#1f2a45' }}>{done ? '✓' : i + 1}</div>
                     {i < TIMELINE.length - 1 && <div className="tl-connector" />}
                   </div>
                   <div role="button" tabIndex={0} className={`tl-body${done ? ' done' : ''}`} onClick={() => toggleMonth(i)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMonth(i); } }} style={{ cursor: 'pointer' }}>
@@ -339,7 +339,7 @@ export default function App() {
 
       {tab === 'settings' && (
         <div className="animate-in">
-          <div className="section-title">Configuraci\u00f3n <span>· Ajusta tus n\u00fameros reales</span></div>
+          <div className="section-title">Configuración <span>· Ajusta tus números reales</span></div>
           <div className="two-col-settings" style={{ marginBottom: 24 }}>
             <div className="card income-card">
               <div className="card-title"><span className="dot" /> Flujo mensual</div>
@@ -348,8 +348,8 @@ export default function App() {
               <hr className="divider" />
               <div style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--muted)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}><span>Ingreso</span><span style={{ color: 'var(--text)' }}>{fmt(income)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}><span>Gastos</span><span style={{ color: '#e05a6b' }}>\u2212{fmt(livingExpenses)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}><span>M\u00ednimos</span><span style={{ color: '#a78bfa' }}>\u2212{fmt(minPayments)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}><span>Gastos</span><span style={{ color: '#e05a6b' }}>−{fmt(livingExpenses)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}><span>Mínimos</span><span style={{ color: '#a78bfa' }}>−{fmt(minPayments)}</span></div>
                 <hr className="divider" style={{ margin: '10px 0' }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontWeight: 700 }}>Disponible</span><span style={{ color: available >= 0 ? '#4fd1a5' : '#e05a6b', fontWeight: 800 }}>{fmt(available)}</span></div>
               </div>
@@ -358,8 +358,8 @@ export default function App() {
               <div className="card-title"><span className="dot" style={{ background: '#4a8cf7' }} /> Sistema de cuentas</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 10, padding: '14px 16px' }}>
-                  <div className="tag tag-nu" style={{ marginBottom: 8 }}>Nu D\u00e9bito</div>
-                  <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>Gastos del d\u00eda a d\u00eda: transporte, personal, imprevistos peque\u00f1os.</p>
+                  <div className="tag tag-nu" style={{ marginBottom: 8 }}>Nu Débito</div>
+                  <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>Gastos del día a día: transporte, personal, imprevistos pequeños.</p>
                 </div>
                 <div style={{ background: 'rgba(74,140,247,0.08)', border: '1px solid rgba(74,140,247,0.2)', borderRadius: 10, padding: '14px 16px' }}>
                   <div className="tag tag-bbva" style={{ marginBottom: 8 }}>BBVA</div>
