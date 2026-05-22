@@ -7,9 +7,6 @@ import { DebtIdentityModal } from './components/DebtIdentityModal.jsx';
 import { DonutChart } from './components/DonutChart.jsx';
 import { ExpensesPage } from './features/expenses/components/ExpensesPage.jsx';
 import {
-  DEFAULT_DEBTS,
-  DEFAULT_EXPENSES,
-  DEFAULT_INCOME,
   EXTRA_DEBT_COLORS,
   TABS,
 } from './constants.js';
@@ -22,10 +19,15 @@ export default function App() {
   const { logout } = useAuth();
   const lastMainTabRef = useRef('dashboard');
   const [tab, setTab] = useState(() => path === '/expenses' ? 'expenses' : 'dashboard');
-  const [debts, setDebts] = useState(DEFAULT_DEBTS);
-  const [income, setIncome] = useState(DEFAULT_INCOME);
-  const [livingExpenses, setLivingExpenses] = useState(DEFAULT_EXPENSES);
+  const [debts, setDebts] = useState([]);
+  const [income, setIncome] = useState(0);
+  const [livingExpenses, setLivingExpenses] = useState(0);
   const [completedMonths, setCompletedMonths] = useState([]);
+  const [userAccounts, setUserAccounts] = useState([]);
+  const [showAddAccount, setShowAddAccount] = useState(false);
+  const [newAccountName, setNewAccountName] = useState('');
+  const [newAccountDesc, setNewAccountDesc] = useState('');
+  const [newAccountEmoji, setNewAccountEmoji] = useState('💳');
   const [startMonth, setStartMonth] = useState(() => {
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
@@ -37,6 +39,7 @@ export default function App() {
     api.get('/api/debts').then(setDebts).catch(() => {});
     api.get('/api/config/income').then(d => { if (d.value) setIncome(Number(d.value)); }).catch(() => {});
     api.get('/api/config/expenses').then(d => { if (d.value) setLivingExpenses(Number(d.value)); }).catch(() => {});
+    api.get('/api/config/userAccounts').then(d => { if (d.value) setUserAccounts(JSON.parse(d.value)); }).catch(() => {});
     api.get('/api/config/startMonth').then(d => { if (d.value) setStartMonth(d.value); }).catch(() => {});
     api.get('/api/config/completedMonths').then(d => { if (d.value) setCompletedMonths(JSON.parse(d.value)); }).catch(() => {});
   }, []);
@@ -44,6 +47,7 @@ export default function App() {
   // Save data to API on change
   useEffect(() => { api.put('/api/config/income', { value: String(income) }).catch(() => {}); }, [income]);
   useEffect(() => { api.put('/api/config/expenses', { value: String(livingExpenses) }).catch(() => {}); }, [livingExpenses]);
+  useEffect(() => { api.put('/api/config/userAccounts', { value: JSON.stringify(userAccounts) }).catch(() => {}); }, [userAccounts]);
   useEffect(() => { api.put('/api/config/startMonth', { value: startMonth }).catch(() => {}); }, [startMonth]);
   useEffect(() => { api.put('/api/config/completedMonths', { value: JSON.stringify(completedMonths) }).catch(() => {}); }, [completedMonths]);
 
@@ -94,10 +98,30 @@ export default function App() {
 
   const resetAll = () => {
     if (confirm('Resetear todos los datos al inicio?')) {
-      setDebts(DEFAULT_DEBTS);
-      setIncome(DEFAULT_INCOME);
-      setLivingExpenses(DEFAULT_EXPENSES);
+      setDebts([]);
+      setIncome(0);
+      setLivingExpenses(0);
       setCompletedMonths([]);
+    }
+  };
+
+  const handleDeleteAccount = (idx) => {
+    setUserAccounts(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSaveAccount = () => {
+    if (newAccountName.trim()) {
+      const color = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+      setUserAccounts(prev => [...prev, {
+        name: newAccountName.trim(),
+        description: newAccountDesc.trim(),
+        emoji: newAccountEmoji || '💳',
+        color
+      }]);
+      setNewAccountName('');
+      setNewAccountDesc('');
+      setNewAccountEmoji('💳');
+      setShowAddAccount(false);
     }
   };
 
@@ -119,7 +143,7 @@ export default function App() {
         <div className="header-left">
           <h1>Plan de <span>Liquidación</span></h1>
           <div className="header-left-row">
-            <p>Inicio: Abril 2026 · Sistema 2 cuentas</p>
+            <p>Personaliza tus datos financieros en Configuración</p>
             <button type="button" className="btn-ghost header-logout"
               onClick={() => { if (confirm('Cerrar sesión?')) logout(); }}>
               Cerrar sesión
@@ -383,16 +407,63 @@ export default function App() {
             </div>
             <div className="card">
               <div className="card-title"><span className="dot" style={{ background: '#4a8cf7' }} /> Sistema de cuentas</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 10, padding: '14px 16px' }}>
-                  <div className="tag tag-nu" style={{ marginBottom: 8 }}>Nu Débito</div>
-                  <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>Gastos del día a día: transporte, personal, imprevistos pequeños.</p>
-                </div>
-                <div style={{ background: 'rgba(74,140,247,0.08)', border: '1px solid rgba(74,140,247,0.2)', borderRadius: 10, padding: '14px 16px' }}>
-                  <div className="tag tag-bbva" style={{ marginBottom: 8 }}>BBVA</div>
-                  <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>Pagos programados, renta y deudas.</p>
-                </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {userAccounts.length === 0 ? (
+                  <p style={{ color: 'var(--muted)', fontSize: 13, fontFamily: 'var(--mono)', textAlign: 'center', padding: 20 }}>
+                    Aún no has configurado tus cuentas.
+                    <br />
+                    <button type="button" className="btn-ghost" style={{ marginTop: 8 }} onClick={() => setShowAddAccount(true)}>
+                      + Agregar cuenta
+                    </button>
+                  </p>
+                ) : (
+                  userAccounts.map((acct, i) => (
+                    <div key={i} style={{
+                      background: acct.color + '14',
+                      border: '1px solid ' + acct.color + '33',
+                      borderRadius: 10, padding: '14px 16px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <span style={{ fontSize: 18, marginRight: 8 }}>{acct.emoji}</span>
+                          <strong>{acct.name}</strong>
+                        </div>
+                        <button type="button" className="btn-ghost" style={{ fontSize: 11, padding: '2px 6px' }}
+                          onClick={() => handleDeleteAccount(i)}>Eliminar</button>
+                      </div>
+                      <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5, marginTop: 6 }}>
+                        {acct.description}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
+              {showAddAccount && (
+                <div style={{ marginTop: 12, padding: 14, background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                  <div className="input-group" style={{ marginBottom: 8 }}>
+                    <label>Nombre</label>
+                    <input type="text" value={newAccountName}
+                      onChange={(e) => setNewAccountName(e.target.value)}
+                      placeholder="Ej. BBVA" />
+                  </div>
+                  <div className="input-group" style={{ marginBottom: 8 }}>
+                    <label>Descripción</label>
+                    <input type="text" value={newAccountDesc}
+                      onChange={(e) => setNewAccountDesc(e.target.value)}
+                      placeholder="Ej. Pagos programados, renta y deudas" />
+                  </div>
+                  <div className="input-group" style={{ marginBottom: 8 }}>
+                    <label>Emoji</label>
+                    <input type="text" value={newAccountEmoji}
+                      onChange={(e) => setNewAccountEmoji(e.target.value)}
+                      style={{ width: 60, textAlign: 'center' }} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button type="button" className="btn" onClick={handleSaveAccount}>Guardar</button>
+                    <button type="button" className="btn-ghost" onClick={() => setShowAddAccount(false)}>Cancelar</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="card" style={{ marginBottom: 24 }}>
