@@ -98,9 +98,12 @@ export function DebtIdentityModal({
     } else if (variant === 'edit' && debt) {
       onSaveEdit(debt.id, {
         name: trimmed,
-        emoji: emoji.trim() || '💳',
+        emoji: emoji.trim() || U0001f4b3,
         iconUrl: iconUrl.trim(),
-      });
+        initialBalance: Number(initialBalance) || 0,
+        currentBalance: Number(currentBalance) || 0,
+        minPayment: Number(minPayment) || 0,
+      })      });
     }
     onClose();
   };
