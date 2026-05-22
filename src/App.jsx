@@ -18,6 +18,7 @@ export default function App() {
   const { path, navigate } = useNavigation();
   const { logout } = useAuth();
   const lastMainTabRef = useRef('dashboard');
+  const loadedRef = useRef(false);
   const [tab, setTab] = useState(() => path === '/expenses' ? 'expenses' : 'dashboard');
   const [debts, setDebts] = useState([]);
   const [income, setIncome] = useState(0);
@@ -36,7 +37,20 @@ export default function App() {
 
   // Load initial data from API
   useEffect(() => {
-    api.get('/api/debts').then(setDebts).catch(() => {});
+    api.get('/api/debts').then(data => {
+    setDebts(data.map(d => ({
+      id: d.id,
+      user_id: d.user_id,
+      name: d.name,
+      emoji: d.emoji || '',
+      color: d.color || '#6b7280',
+      paid: !!d.paid,
+      created_at: d.created_at,
+      initialBalance: d.initial_balance || 0,
+      currentBalance: d.current_balance || 0,
+      minPayment: d.min_payment || 0,
+    })));
+  }).catch(() => {});
     api.get('/api/config/income').then(d => { if (d.value) setIncome(Number(d.value)); }).catch(() => {});
     api.get('/api/config/expenses').then(d => { if (d.value) setLivingExpenses(Number(d.value)); }).catch(() => {});
     api.get('/api/config/userAccounts').then(d => { if (d.value) setUserAccounts(JSON.parse(d.value)); }).catch(() => {});
@@ -45,14 +59,15 @@ export default function App() {
   }, []);
 
   // Save data to API on change
-  useEffect(() => { api.put('/api/config/income', { value: String(income) }).catch(() => {}); }, [income]);
-  useEffect(() => { api.put('/api/config/expenses', { value: String(livingExpenses) }).catch(() => {}); }, [livingExpenses]);
-  useEffect(() => { api.put('/api/config/userAccounts', { value: JSON.stringify(userAccounts) }).catch(() => {}); }, [userAccounts]);
-  useEffect(() => { api.put('/api/config/startMonth', { value: startMonth }).catch(() => {}); }, [startMonth]);
-  useEffect(() => { api.put('/api/config/completedMonths', { value: JSON.stringify(completedMonths) }).catch(() => {}); }, [completedMonths]);
+  useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/income', { value: String(income) }).catch(() => {}); }, [income]);
+  useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/expenses', { value: String(livingExpenses) }).catch(() => {}); }, [livingExpenses]);
+  useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/userAccounts', { value: JSON.stringify(userAccounts) }).catch(() => {}); }, [userAccounts]);
+  useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/startMonth', { value: startMonth }).catch(() => {}); }, [startMonth]);
+  useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/completedMonths', { value: JSON.stringify(completedMonths) }).catch(() => {}); }, [completedMonths]);
 
   // Sync debts to API
   useEffect(() => {
+    if (!loadedRef.current) return;
     const timer = setTimeout(() => {
       const save = async () => {
         for (const d of debts) {
