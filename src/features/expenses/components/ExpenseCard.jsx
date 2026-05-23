@@ -10,7 +10,7 @@ import { getCategoryIcon, getCategoryLabel, formatExpenseDateShort, formatExpens
 export function ExpenseCard({ expense, onEdit, onDelete }) {
   const desc = (expense.description || '').trim();
   const title = desc || getCategoryLabel(expense.category) || expense.category;
-  const icon = getCategoryIcon(expense.category) || '📌';
+  const icon = expense.icon || getCategoryIcon(expense.category) || '📌';
 
   return (
     <div className="expense-card">

@@ -1387,3 +1387,84 @@ canvas {
 .expense-form-modal {
   max-width: 440px;
 }
+
+/* ─── Emoji Picker ─── */
+.emoji-picker-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.emoji-picker-label {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: var(--font);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.emoji-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 24px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  width: fit-content;
+}
+
+.emoji-picker-btn:hover,
+.emoji-picker-btn:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(240, 192, 64, 0.15);
+}
+
+.emoji-picker-current {
+  line-height: 1;
+}
+
+.emoji-picker-arrow {
+  font-size: 10px;
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+
+.emoji-picker-wrapper:focus-within .emoji-picker-arrow {
+  transform: rotate(180deg);
+}
+
+.emoji-picker-dropdown {
+  position: absolute;
+  z-index: 1000;
+  margin-top: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+/* Emoji Mart overrides for dark theme */
+.emoji-picker-dropdown em-emoji-picker {
+  --rgb-background: 17, 21, 32 !important;
+  --rgb-color: 232, 237, 247 !important;
+  --rgb-accent: 240, 192, 64 !important;
+  --rgb-input: 22, 28, 45 !important;
+  --rgb-border: 31, 42, 69 !important;
+}
+
+.emoji-picker-clear {
+  font-size: 11px;
+  color: var(--accent3);
+  margin-top: 4px;
+  align-self: flex-start;
+}
+
+.category-manager-add-row .emoji-picker-wrapper {
+  flex: 0 0 auto;
+}

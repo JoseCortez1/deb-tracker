@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  expenses        Expense[]
+  debts           Debt[]
+  customCategories CustomCategory[]
+  configs         UserConfig[]
+
+  @@map("users")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  amount      Float
+  category    String
+  description String   @default("")
+  date        String
+  isRecurring Boolean  @default(false) @map("is_recurring")
+  createdAt   DateTime @default(now()) @map("created_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@map("expenses")
+}
+
+model Debt {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  name           String
+  emoji          String   @default("💳")
+  initialBalance Float    @map("initial_balance")
+  currentBalance Float    @map("current_balance")
+  minPayment     Float    @default(0) @map("min_payment")
+  color          String   @default("#6b7280")
+  paid           Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("debts")
+}
+
+model CustomCategory {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  icon      String   @default("📌")
+  color     String   @default("#6b7280")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("custom_categories")
+}
+
+model UserConfig {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  key    String
+  value  String @default("")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([userId])
+  @@map("user_config")
+}

@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { EmojiPicker } from '../../../components/EmojiPicker.jsx';
 
 export function CategoryManager({ open, onClose, customCategories = [], addCustomCategory, removeCustomCategory }) {
   const titleId = useId();
@@ -63,9 +64,7 @@ export function CategoryManager({ open, onClose, customCategories = [], addCusto
         <div className="category-manager-section category-manager-add-section">
           <h3 className="category-manager-section-title">Agregar nueva categoría</h3>
           <div className="category-manager-add-row">
-            <select className="input-select category-manager-icon-select" value={newIcon} onChange={(e) => setNewIcon(e.target.value)}>
-              {['📌','🐾','💡','🎮','🎵','📱','👕','🏋️','✈️','🎁','💊','📦','🔧','🌿','🎨'].map((ic) => (<option key={ic} value={ic}>{ic}</option>))}
-            </select>
+            <EmojiPicker value={newIcon} onChange={setNewIcon} label="Icono" />
             <input type="text" className="category-manager-name-input" placeholder="Nombre de la categoría" value={newName}
               onChange={(e) => { setNewName(e.target.value); setError(''); }}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAdd(); }}} />

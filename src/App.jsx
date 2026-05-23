@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { api } from './api.js';
 import { useAuth } from './auth/AuthContext.jsx';
 import { BarChart } from './components/BarChart.jsx';
@@ -23,6 +23,7 @@ export default function App() {
   const [debts, setDebts] = useState([]);
   const [income, setIncome] = useState(0);
   const [livingExpenses, setLivingExpenses] = useState(0);
+  const [budgetItems, setBudgetItems] = useState([]);
   const [completedMonths, setCompletedMonths] = useState([]);
   const [userAccounts, setUserAccounts] = useState([]);
   const [showAddAccount, setShowAddAccount] = useState(false);
@@ -34,6 +35,17 @@ export default function App() {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
   });
   const [identityModal, setIdentityModal] = useState(null);
+  const handleDebtPayment = useCallback(async (debtId, amount) => {
+    try {
+      const debt = debts.find(d => d.id === debtId);
+      if (!debt) return;
+      const newBalance = Math.max(0, Number(debt.currentBalance) - Number(amount));
+      await api.put('/api/debts/' + debtId, { currentBalance: newBalance, paid: newBalance === 0 ? true : undefined });
+      setDebts(prev => prev.map(d => d.id === debtId ? { ...d, currentBalance: newBalance, paid: newBalance === 0 ? true : d.paid } : d));
+    } catch (err) {
+      console.error('Error al pagar deuda desde gasto:', err);
+    }
+  }, [debts]);
 
   // Load initial data from API
   useEffect(() => {
@@ -53,6 +65,24 @@ export default function App() {
   }).catch(() => {});
     api.get('/api/config/income').then(d => { if (d.value) setIncome(Number(d.value)); }).catch(() => {});
     api.get('/api/config/expenses').then(d => { if (d.value) setLivingExpenses(Number(d.value)); }).catch(() => {});
+    api.get('/api/config/budget').then(d => {
+      const items = d.value ? JSON.parse(d.value) : null;
+      if (items && items.length > 0) {
+        setBudgetItems(items);
+        setLivingExpenses(items.reduce((s, i) => s + (Number(i.amount) || 0), 0));
+      } else {
+        const defaults = [
+          { name: 'Renta', emoji: '🏠', amount: 0 },
+          { name: 'Despensa', emoji: '🛒', amount: 0 },
+          { name: 'Transporte', emoji: '🚗', amount: 0 },
+          { name: 'Servicios', emoji: '💡', amount: 0 },
+          { name: 'Suscripciones', emoji: '📺', amount: 0 },
+          { name: 'Gasolina', emoji: '⛽', amount: 0 },
+        ];
+        setBudgetItems(defaults);
+        setLivingExpenses(0);
+      }
+    }).catch(() => {});
     api.get('/api/config/userAccounts').then(d => { if (d.value) setUserAccounts(JSON.parse(d.value)); }).catch(() => {});
     api.get('/api/config/startMonth').then(d => { if (d.value) setStartMonth(d.value); }).catch(() => {});
     api.get('/api/config/completedMonths').then(d => { if (d.value) setCompletedMonths(JSON.parse(d.value)); }).catch(() => {});
@@ -60,7 +90,23 @@ export default function App() {
 
   // Save data to API on change
   useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/income', { value: String(income) }).catch(() => {}); }, [income]);
-  useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/expenses', { value: String(livingExpenses) }).catch(() => {}); }, [livingExpenses]);
+  // Debounced save for budget items
+  const saveBudgetRef = useRef(null);
+  const scheduleBudgetSave = useCallback((items) => {
+    if (saveBudgetRef.current) clearTimeout(saveBudgetRef.current);
+    saveBudgetRef.current = setTimeout(() => {
+      api.put('/api/config/budget', { value: JSON.stringify(items) }).catch(() => {});
+    }, 30000);
+  }, []);
+
+
+  const budgetTotal = budgetItems.reduce((s, i) => s + (Number(i.amount) || 0), 0);
+
+  useEffect(() => {
+    if (!loadedRef.current) return;
+    scheduleBudgetSave(budgetItems);
+    setLivingExpenses(budgetTotal);
+  }, [budgetItems]);
   useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/userAccounts', { value: JSON.stringify(userAccounts) }).catch(() => {}); }, [userAccounts]);
   useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/startMonth', { value: startMonth }).catch(() => {}); }, [startMonth]);
   useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/completedMonths', { value: JSON.stringify(completedMonths) }).catch(() => {}); }, [completedMonths]);
@@ -194,7 +240,7 @@ export default function App() {
         ))}
       </div>
 
-      {tab === 'expenses' && <ExpensesPage />}
+      {tab === 'expenses' && <ExpensesPage debts={debts} onDebtPayment={handleDebtPayment} />}
 
       {tab === 'dashboard' && (
         <div className="animate-in">
@@ -410,7 +456,43 @@ export default function App() {
             <div className="card income-card">
               <div className="card-title"><span className="dot" /> Flujo mensual</div>
               <div className="input-group"><label htmlFor="income">Ingreso mensual</label><input id="income" type="number" value={income} onChange={(e) => setIncome(Number(e.target.value))} /></div>
-              <div className="input-group"><label htmlFor="expenses">Gastos de vida ajustados (sin despensa)</label><input id="expenses" type="number" value={livingExpenses} onChange={(e) => setLivingExpenses(Number(e.target.value))} /></div>
+              <div className="input-group"><label htmlFor="expenses">Gastos de vida ajustados (sin despensa)</label></div>
+              <div className="budget-table">
+                <div className="budget-table-header">
+                  <span>Concepto</span>
+                  <span>Monto</span>
+                  <span></span>
+                </div>
+                {budgetItems.map((item, i) => (
+                  <div key={i} className="budget-table-row">
+                    <span className="budget-item-name"><span style={{ marginRight: 6 }}>{item.emoji}</span>{item.name}</span>
+                    <input
+                      className="budget-item-input"
+                      type="number"
+                      value={item.amount}
+                      min={0}
+                      onChange={(e) => {
+                        const next = [...budgetItems];
+                        next[i] = { ...next[i], amount: Number(e.target.value) || 0 };
+                        setBudgetItems(next);
+                      }}
+                    />
+                    <button type="button" className="budget-delete-btn"
+                      onClick={() => setBudgetItems(prev => prev.filter((_, j) => j !== i))}
+                      title="Eliminar">×</button>
+                  </div>
+                ))}
+                <div className="budget-table-add-row">
+                  <button type="button" className="btn-ghost budget-add-btn"
+                    onClick={() => setBudgetItems(prev => [...prev, ({ name: 'Nuevo concepto', emoji: '📌', amount: 0 })])}>
+                    + Agregar concepto
+                  </button>
+                </div>
+                <div className="budget-table-total">
+                  <span>Total</span>
+                  <span className="budget-total-value">{fmt(budgetTotal)}</span>
+                </div>
+              </div>
               <hr className="divider" />
               <div style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--muted)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}><span>Ingreso</span><span style={{ color: 'var(--text)' }}>{fmt(income)}</span></div>
