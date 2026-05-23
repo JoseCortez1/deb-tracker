@@ -1,7 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import { ExpenseCategory } from '../types/expense.types.js';
-import { getAllCategories, getCategoryLabel, getCategoryIcon } from '../utils/expense.utils.js';
-import { EmojiPicker } from '../../../components/EmojiPicker.jsx';
+import { getAllCategories, getCategoryLabel } from '../utils/expense.utils.js';
 
 function todayLocalISO() {
   const n = new Date();
@@ -11,20 +10,16 @@ function todayLocalISO() {
   return `${y}-${m}-${d}`;
 }
 
-export function ExpenseFormModal({ open, mode, initial, onClose, onSubmit, customCategories = [], debts, onLinkDebt }) {
+export function ExpenseFormModal({ open, mode, initial, onClose, onSubmit, customCategories = [] }) {
   const titleId = useId();
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(ExpenseCategory.OTHER);
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(todayLocalISO());
   const [isRecurring, setIsRecurring] = useState(false);
-  const [iconOverride, setIconOverride] = useState('');
-  const [linkedDebtId, setLinkedDebtId] = useState(null);
   const [errors, setErrors] = useState({});
 
   const categoryOptions = getAllCategories();
-  const unpaidDebts = debts ? debts.filter(d => !d.paid) : [];
-  const showDebtSelector = debts && unpaidDebts.length > 0;
 
   useEffect(() => {
     if (!open) return;
@@ -34,10 +29,9 @@ export function ExpenseFormModal({ open, mode, initial, onClose, onSubmit, custo
       setDescription(initial.description ?? '');
       setDate(initial.date || todayLocalISO());
       setIsRecurring(Boolean(initial.isRecurring));
-      setIconOverride(initial.icon || '');
     } else {
       setAmount(''); setCategory(ExpenseCategory.FOOD); setDescription('');
-      setDate(todayLocalISO()); setIsRecurring(false); setIconOverride('');
+      setDate(todayLocalISO()); setIsRecurring(false);
     }
     setErrors({});
   }, [open, mode, initial?.id, customCategories]);
@@ -58,7 +52,7 @@ export function ExpenseFormModal({ open, mode, initial, onClose, onSubmit, custo
   const handleSubmit = (ev) => {
     ev.preventDefault();
     if (!validate()) return;
-    onSubmit({ amount: Number(amount), category, description: description.trim(), date, isRecurring, icon: iconOverride || undefined });
+    onSubmit({ amount: Number(amount), category, description: description.trim(), date, isRecurring });
     onClose();
   };
 
@@ -94,32 +88,6 @@ export function ExpenseFormModal({ open, mode, initial, onClose, onSubmit, custo
               <span>¿Es recurrente? (mensual)</span>
             </label>
           </div>
-          <div className="input-group">
-            <EmojiPicker
-              value={iconOverride || getCategoryIcon(category)}
-              onChange={setIconOverride}
-              label="Icono del gasto"
-            />
-            {iconOverride && (
-              <button
-                type="button"
-                className="btn-ghost emoji-picker-clear"
-                onClick={() => setIconOverride('')}
-                title="Usar icono de categoría"
-              >
-                Usar el de la categoría
-              </button>
-            )}
-          </div>
-          {showDebtSelector && (
-            <div className="input-group">
-              <label htmlFor={`${titleId}-debt`}>Vincular a deuda</label>
-              <select id={`${titleId}-debt`} className="input-select" value={linkedDebtId || ''} onChange={(ev) => { setLinkedDebtId(ev.target.value || null); onLinkDebt?.(ev.target.value || null); }}>
-                <option value="">— Sin vínculo —</option>
-                {unpaidDebts.map(d => (<option key={d.id} value={d.id}>{d.emoji} {d.name} ({d.currentBalance})</option>))}
-              </select>
-            </div>
-          )}
           <div className="modal-actions">
             <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
             <button type="submit" className="btn modal-btn-primary">Guardar</button>

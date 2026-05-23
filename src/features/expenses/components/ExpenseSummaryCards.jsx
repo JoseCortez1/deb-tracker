@@ -15,7 +15,7 @@ export function ExpenseSummaryCards({ summary }) {
       </div>
       <div className="stat-card expense-summary-card" style={{ '--accent-color': '#4a8cf7' }}>
         <div className="stat-label">Categoría principal</div>
-        <div className="stat-value expense-summary-topcat">{summary.topCategory ?? '—'}</div>
+        <div className="stat-value expense-summary-topcat">{summary.topCategory?.label ?? '—'}</div>
         <div className="stat-sub">Mayor gasto en la lista</div>
       </div>
     </div>

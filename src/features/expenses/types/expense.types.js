@@ -10,7 +10,6 @@
  * @property {string} date -- YYYY-MM-DD
  * @property {boolean} isRecurring
  * @property {string} createdAt -- ISO 8601
- * @property {string} [icon] -- Emoji override for this expense (optional)
  */
 
 /**
@@ -32,7 +31,6 @@ export const ExpenseCategory = {
   EDUCATION: "education",
   SAVINGS: "savings",
   OTHER: "other",
-  PAYMENT: "debt_payment",
 };
 
 export const BUILT_IN_CATEGORIES = Object.values(ExpenseCategory);

@@ -1387,84 +1387,131 @@ canvas {
 .expense-form-modal {
   max-width: 440px;
 }
-
-/* ─── Emoji Picker ─── */
-.emoji-picker-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* ─── Budget Table (Config > Flujo mensual) ─── */
+.budget-table {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 13px;
 }
 
-.emoji-picker-label {
-  font-size: 13px;
+.budget-table-header {
+  display: grid;
+  grid-template-columns: 1fr 100px 30px;
+  gap: 8px;
+  padding: 6px 8px;
   color: var(--muted);
-  font-family: var(--font);
-  font-weight: 600;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
 }
 
-.emoji-picker-btn {
-  display: inline-flex;
-  align-items: center;
+.budget-table-row {
+  display: grid;
+  grid-template-columns: 1fr 100px 30px;
   gap: 8px;
-  padding: 8px 16px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.budget-table-row:hover {
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 24px;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  width: fit-content;
 }
 
-.emoji-picker-btn:hover,
-.emoji-picker-btn:focus-visible {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(240, 192, 64, 0.15);
+.budget-item-name {
+  color: var(--text);
+  font-weight: 500;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.emoji-picker-current {
-  line-height: 1;
-}
-
-.emoji-picker-arrow {
-  font-size: 10px;
-  color: var(--muted);
-  transition: transform 0.15s;
-}
-
-.emoji-picker-wrapper:focus-within .emoji-picker-arrow {
-  transform: rotate(180deg);
-}
-
-.emoji-picker-dropdown {
-  position: absolute;
-  z-index: 1000;
-  margin-top: 4px;
+.budget-item-input {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  width: 100%;
+  text-align: right;
+  outline: none;
+  transition: border-color 0.2s;
+  -moz-appearance: textfield;
 }
 
-/* Emoji Mart overrides for dark theme */
-.emoji-picker-dropdown em-emoji-picker {
-  --rgb-background: 17, 21, 32 !important;
-  --rgb-color: 232, 237, 247 !important;
-  --rgb-accent: 240, 192, 64 !important;
-  --rgb-input: 22, 28, 45 !important;
-  --rgb-border: 31, 42, 69 !important;
+.budget-item-input::-webkit-inner-spin-button,
+.budget-item-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-.emoji-picker-clear {
-  font-size: 11px;
+.budget-item-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(240, 192, 64, 0.12);
+}
+
+.budget-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
   color: var(--accent3);
-  margin-top: 4px;
-  align-self: flex-start;
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.category-manager-add-row .emoji-picker-wrapper {
-  flex: 0 0 auto;
+.budget-delete-btn:hover {
+  background: rgba(224, 90, 107, 0.12);
+}
+
+.budget-table-add-row {
+  padding: 8px;
+  display: flex;
+}
+
+.budget-add-btn {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 6px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  width: 100%;
+  text-align: center;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.budget-add-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.budget-table-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 8px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.budget-total-value {
+  font-weight: 700;
+  color: var(--accent2);
+  font-family: var(--mono);
 }
