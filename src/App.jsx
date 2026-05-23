@@ -4,6 +4,7 @@ import { useAuth } from './auth/AuthContext.jsx';
 import { BarChart } from './components/BarChart.jsx';
 import { DebtAvatar } from './components/DebtAvatar.jsx';
 import { DebtIdentityModal } from './components/DebtIdentityModal.jsx';
+import { BudgetItemModal } from './components/BudgetItemModal.jsx';
 import { DonutChart } from './components/DonutChart.jsx';
 import { ExpensesPage } from './features/expenses/components/ExpensesPage.jsx';
 import {
@@ -35,6 +36,7 @@ export default function App() {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
   });
   const [identityModal, setIdentityModal] = useState(null);
+  const [editBudgetIndex, setEditBudgetIndex] = useState(null);
   const handleDebtPayment = useCallback(async (debtId, amount) => {
     try {
       const debt = debts.find(d => d.id === debtId);
@@ -107,6 +109,22 @@ export default function App() {
     scheduleBudgetSave(budgetItems);
     setLivingExpenses(budgetTotal);
   }, [budgetItems]);
+
+  // Save budget immediately (for onBlur)
+  const saveBudgetImmediately = useCallback((items) => {
+    if (saveBudgetRef.current) clearTimeout(saveBudgetRef.current);
+    api.put('/api/config/budget', { value: JSON.stringify(items) }).catch(() => {});
+  }, []);
+
+  // Handle budget item edit from modal
+  const handleSaveBudgetItem = useCallback((index, updatedItem) => {
+    setBudgetItems(prev => {
+      const next = [...prev];
+      next[index] = updatedItem;
+      saveBudgetImmediately(next);
+      return next;
+    });
+  }, [saveBudgetImmediately]);
   useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/userAccounts', { value: JSON.stringify(userAccounts) }).catch(() => {}); }, [userAccounts]);
   useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/startMonth', { value: startMonth }).catch(() => {}); }, [startMonth]);
   useEffect(() => { if (!loadedRef.current) return; api.put('/api/config/completedMonths', { value: JSON.stringify(completedMonths) }).catch(() => {}); }, [completedMonths]);
@@ -465,7 +483,9 @@ export default function App() {
                 </div>
                 {budgetItems.map((item, i) => (
                   <div key={i} className="budget-table-row">
-                    <span className="budget-item-name"><span style={{ marginRight: 6 }}>{item.emoji}</span>{item.name}</span>
+                    <span className="budget-item-name" style={{ cursor: 'pointer' }} onClick={() => setEditBudgetIndex(i)} title="Editar concepto">
+                      <span style={{ marginRight: 6 }}>{item.emoji}</span>{item.name}
+                    </span>
                     <input
                       className="budget-item-input"
                       type="number"
@@ -475,6 +495,11 @@ export default function App() {
                         const next = [...budgetItems];
                         next[i] = { ...next[i], amount: Number(e.target.value) || 0 };
                         setBudgetItems(next);
+                      }}
+                      onBlur={(e) => {
+                        const next = [...budgetItems];
+                        next[i] = { ...next[i], amount: Number(e.target.value) || 0 };
+                        saveBudgetImmediately(next);
                       }}
                     />
                     <button type="button" className="budget-delete-btn"
@@ -585,6 +610,13 @@ export default function App() {
         </div>
       )}
 
+      <BudgetItemModal
+        open={editBudgetIndex !== null}
+        item={editBudgetIndex !== null ? budgetItems[editBudgetIndex] : null}
+        index={editBudgetIndex}
+        onClose={() => setEditBudgetIndex(null)}
+        onSave={handleSaveBudgetItem}
+      />
       <DebtIdentityModal
         open={identityModal != null}
         variant={identityModal?.variant}
