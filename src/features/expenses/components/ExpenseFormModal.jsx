@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ExpenseCategory } from '../types/expense.types.js';
 import { getAllCategories, getCategoryLabel } from '../utils/expense.utils.js';
 
@@ -56,7 +57,7 @@ export function ExpenseFormModal({ open, mode, initial, onClose, onSubmit, custo
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" role="presentation" onClick={(ev) => ev.target === ev.currentTarget && onClose()}>
       <div className="modal-panel expense-form-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <h2 id={titleId} className="modal-title">{mode === 'add' ? 'Agregar gasto' : 'Editar gasto'}</h2>
@@ -94,6 +95,7 @@ export function ExpenseFormModal({ open, mode, initial, onClose, onSubmit, custo
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
